@@ -1,0 +1,16 @@
+#!/usr/bin/php
+<?php
+
+require_once(dirname(__DIR__).'/vendor/autoload.php');
+
+use MariaHill\MariaHill;
+
+$config = parse_ini_file(dirname(__DIR__).'/config/config.ini', true);
+
+$db = new MariaHill($config['mariahill']);
+
+$databases = MariaHill::showDatabases($db);
+
+echo 'DATABASES:'.PHP_EOL;
+echo '-------------------'.PHP_EOL;
+echo json_encode($databases,JSON_PRETTY_PRINT).PHP_EOL;

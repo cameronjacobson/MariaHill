@@ -1,0 +1,23 @@
+#!/usr/bin/php
+<?php
+
+if(empty($argv[1]) || empty($argv[2])){
+	echo PHP_EOL.'  USAGE: bin/show_columns [database] [table]'.PHP_EOL.PHP_EOL;
+	exit;
+}
+
+require_once(dirname(__DIR__).'/vendor/autoload.php');
+
+use MariaHill\MariaHill;
+
+$config = parse_ini_file(dirname(__DIR__).'/config/config.ini', true);
+
+$db = new MariaHill($config['mariahill']);
+
+$db->changeDatabase($argv[1]);
+$columns = MariaHill::tableDescription($db, $argv[2]);
+
+echo 'COLUMNS IN '.$argv[1].'.'.$argv[2].':'.PHP_EOL;
+echo '-----------------------------------------'.PHP_EOL;
+
+echo json_encode($columns, JSON_PRETTY_PRINT).PHP_EOL;
