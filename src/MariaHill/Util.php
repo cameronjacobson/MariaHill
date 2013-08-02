@@ -66,7 +66,6 @@ trait Util
 			$dsn_parts[] = $key.'='.$value;
 		}
 		$dsn = $scheme.':'.implode(';',$dsn_parts);
-var_dump($dsn);
 	}
 
 	public static function getDsnComponent($dsn, $key){
