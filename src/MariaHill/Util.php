@@ -52,12 +52,21 @@ trait Util
 	public static function setDsnComponent(&$dsn, $key, $value){
 		list($scheme, $params) = explode(':', $dsn, 2);
 		$dsn_parts = explode(';',$params);
-		foreach($dsn_parts as &$part){
+		$changed = false;
+		foreach($dsn_parts as $k=>&$part){
+			if(empty($part)){
+				unset($dsn_parts[$k]);
+			}
 			if(strpos($part, $key.'=') === 0){
 				$part = $key.'='.$value;
+				$changed = true;
 			}
 		}
+		if(!$changed){
+			$dsn_parts[] = $key.'='.$value;
+		}
 		$dsn = $scheme.':'.implode(';',$dsn_parts);
+var_dump($dsn);
 	}
 
 	public static function getDsnComponent($dsn, $key){

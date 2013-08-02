@@ -1,3 +1,5 @@
 vendor
 composer.lock
-*/meta/*.json
+*/meta/*/*.json
+*.swp
+config.ini

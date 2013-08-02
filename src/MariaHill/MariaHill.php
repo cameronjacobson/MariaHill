@@ -24,6 +24,7 @@ class MariaHill
 			throw new MariaHillException('file does not exist: '.$ini);
 		}
 		$this->db = new PDO($this->config['dsn'], $this->config['username'], $this->config['password']);
+		$this->loadMeta();
 	}
 
 	public function setScheme($scheme){
@@ -36,14 +37,6 @@ class MariaHill
 
 	public function setPort($port){
 		$this->db->port = $port;
-	}
-
-	public function setUsername($user){
-		$this->db->user = $user;
-	}
-
-	public function setPassword($pass){
-		$this->db->pass = $pass;
 	}
 
 	public function store($object){
@@ -60,11 +53,11 @@ class MariaHill
 		$obj = null;
 	}
 
-	public function changeUsername($username){
+	public function setUsername($username){
 		$this->config['username'] = $username;
 	}
 
-	public function changePassword($password){
+	public function setPassword($password){
 		$this->config['password'] = $password;
 	}
 
@@ -76,20 +69,24 @@ class MariaHill
             throw new MariaHillException('Cant change nonexistant database handle');
         }
         self::setDsnComponent($this->config['dsn'], 'dbname', $dbname);
-$this->db = null;
         $this->db = new PDO($this->config['dsn'], $this->config['username'], $this->config['password']);
     }
-
-	public static function getMeta(){
-		self::$config = self::getConfig();
-		return self::$meta = empty(self::$meta)
-			? json_decode(file_get_contents(self::getPkgRoot().'/'.self::$config['mariahill']['meta']))
-			: self::$meta;
-	}
 
 	public static function getPkgRoot(){
 		return self::$pkgroot = empty(self::$pkgroot)
 			? dirname(dirname(__DIR__))
 			: self::$pkgroot;
+	}
+
+	public function loadMeta(){
+		switch($this->config['meta_strategy']){
+			case 'all':
+				break;
+			case 'db':
+				break;
+			default:
+				throw new MariaHillException('Invalid meta_strategy: "'.$this->config['meta_strategy'].'"');
+				break;
+		}
 	}
 }
