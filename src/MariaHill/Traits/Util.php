@@ -1,6 +1,6 @@
 <?php
 
-namespace MariaHill;
+namespace MariaHill\Traits;
 
 use \PDO;
 
@@ -87,5 +87,13 @@ trait Util
 			mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff),
 			mt_rand(0, 0xffff), mt_rand(0, 0xffff)
 		);
+	}
+
+	private array2sql(array $data){
+		$sql = array();
+		foreach($data as $key=>$value){
+			$sql[] = '`'.$this->column(substr($key,1)).'` = '.$key;
+		}
+		return implode(',',$sql);
 	}
 }
