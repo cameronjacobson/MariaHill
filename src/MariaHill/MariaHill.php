@@ -17,6 +17,8 @@ class MariaHill
 	private $database;
 	private $options;
 
+	private $ADMIN_MODE = false;
+
 	public function __construct($ini = null){
 		if(is_array($ini)){
 			$this->config = $ini['mariahill'];
@@ -25,15 +27,17 @@ class MariaHill
 		else if(is_string($ini) && file_exists($ini) && ($config = parse_ini_file($ini,true))){
 			$this->config = $config['mariahill'];
 			$this->classmap = $config['mariahill_classmap'];
-			$this->tablemap = array_flip($this->classmap);
 		}
 		else{
 			throw new MariaHillException('file does not exist: '.$ini);
 		}
+		$this->tablemap = array_flip($this->classmap);
+		$this->ADMIN_MODE = empty($this->config['admin']) ? false : true;
 		self::setDsnComponent($this->config['dsn'], 'charset', 'ascii');
 		$this->db = new PDO($this->config['dsn'], $this->config['username'], $this->config['password']);
-		$this->database = $this->database(self::getDsnComponent($this->config['dsn'], 'dbname'));
+		$this->database = self::getDsnComponent($this->config['dsn'], 'dbname');
 		$this->loadMeta();
+		$this->database($this->database);
 	}
 
 	public function setScheme($scheme){
@@ -48,23 +52,27 @@ class MariaHill
 		$this->db->port = $port;
 	}
 
-	public function store($object){
-		$objProperties = $object->getProperties();
+	public function store(&$object){
+		$className = get_class($object);
+		$newClass = new ReflectionClass($className);
+		$obj = $newClass->newInstanceWithoutConstructor();
+		$objProperties = $newClass->getProperties();
 		$data = array();
-		$table = $this->tablemap[get_class($object)];
+		$table = $this->tablemap[$className];
 		foreach($objProperties as $property){
 			$property->setAccessible(true);
 			if(isset($this->meta[$this->database][$table][$property->getName()])){
-				$data[':'.$property->getName()] = $property->getValue();
+				$data[':'.$property->getName()] = $property->getValue($object);
 			}
 		}
-		if(empty($data['uuid'])){
-			$this->insert($table, $data);
+		if(empty($data[':uuid'])){
+			$data[':uuid'] = $this->insert($table, $data);
 		}
 		else{
-			$this->update($table, $data);
+			$data[':uuid'] = $this->update($table, $data);
 		}
-		return $data['uuid'];
+		$object->uuid = $data[':uuid'];
+		return $data[':uuid'];
 	}
 
 	private function insert($table, array $data){
@@ -75,8 +83,9 @@ class MariaHill
 			throw new MariaHillException(__LINE__.' uuid '.$data[':uuid'].' already set.');
 		}
 		$data[':uuid'] = self::getUUID();
-		$this->prepare("INSERT INTO `".$this->database."`.`".$this->table($table)."` SET ".$this->array2sql($data));
-		return $this->execute($data);
+		$stmt = $this->db->prepare("INSERT INTO `".$this->database."`.`".$this->table($table)."` SET ".$this->array2sql($table, $data));
+		$stmt->execute($data);
+		return $data[':uuid'];
 	}
 
 	private function update($table, array $data){
@@ -86,26 +95,27 @@ class MariaHill
 		if(empty($data[':uuid'])){
 			throw new MariaHillException(__LINE__.' uuid not found.');
 		}
-		$this->prepare("UPDATE `".$this->database."`.`".$this->table($table)."` SET ".$this->array2sql($data)." WHERE uuid=?");
-		return $this->execute($data);
+		$stmt = $this->db->prepare("UPDATE `".$this->database."`.`".$this->table($table)."` SET ".$this->array2sql($table, $data)." WHERE uuid=:uuid2");
+		$stmt->execute(array_merge($data,array(':uuid2'=>$data[':uuid'])));
+		return $data[':uuid'];
 	}
 
 	private function database($dbname){
-		if(empty($this->meta[$dbname])){
+		if(!$this->ADMIN_MODE && empty($this->meta[$dbname])){
 			throw new MariaHillException('database '.$dbname.' not found');
 		}
 		return $dbname;
 	}
 
 	private function table($tablename){
-		if(empty($this->meta[$this->database][$tablename])){
+		if(!$this->ADMIN_MODE && empty($this->meta[$this->database][$tablename])){
 			throw new MariaHillException('table '.$this->database.'.'.$tablename.' not found');
 		}
 		return $tablename;
 	}
 
 	private function column($tablename, $colname){
-		if(empty($this->meta[$this->database][$tablename][$colname])){
+		if(!$this->ADMIN_MODE && empty($this->meta[$this->database][$tablename][$colname])){
 			throw new MariaHillException('column '.$this->database.'.'.$tablename.'.'.$colname.' not found');
 		}
 		return $colname;
@@ -167,6 +177,8 @@ class MariaHill
 		self::setDsnComponent($this->config['dsn'], 'charset', 'ascii');
         $this->db = new PDO($this->config['dsn'], $this->config['username'], $this->config['password']);
 		$this->database = $dbname;
+		$this->loadMeta();
+		$this->database($this->database);
     }
 
 	public static function getPkgRoot(){
@@ -178,8 +190,10 @@ class MariaHill
 	public function loadMeta(){
 		switch($this->config['meta_strategy']){
 			case 'all':
+				$this->meta = json_decode(file_get_contents($this->config->meta_dir.'/all/meta.json'));
 				break;
 			case 'db':
+				$this->meta = array($this->database => json_decode(file_get_contents($this->config['meta_dir'].'/db/'.$this->database.'.json'),true));
 				break;
 			default:
 				throw new MariaHillException('Invalid meta_strategy: "'.$this->config['meta_strategy'].'"');

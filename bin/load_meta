@@ -7,9 +7,8 @@ use MariaHill\MariaHill;
 
 $config = parse_ini_file(dirname(__DIR__).'/config/config.ini', true);
 
-$config = $config['mariahill_admin'];
-$meta_dir = $config['meta_dir'];
-
+$config['mariahill'] = $config['mariahill_admin'];
+$meta_dir = $config['mariahill']['meta_dir'];
 $db = new MariaHill($config);
 
 $databases = MariaHill::showDatabases($db);

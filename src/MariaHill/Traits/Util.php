@@ -3,6 +3,7 @@
 namespace MariaHill\Traits;
 
 use \PDO;
+use \MariaHill\MariaHill;
 
 trait Util
 {
@@ -89,10 +90,10 @@ trait Util
 		);
 	}
 
-	private array2sql(array $data){
+	private function array2sql($table, array $data){
 		$sql = array();
 		foreach($data as $key=>$value){
-			$sql[] = '`'.$this->column(substr($key,1)).'` = '.$key;
+			$sql[] = '`'.$this->column($table, substr($key,1)).'` = '.$key;
 		}
 		return implode(',',$sql);
 	}
