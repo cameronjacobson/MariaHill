@@ -30,7 +30,7 @@ for($x=0;$x<10;$x++){
 $query = new MysqlQuery($db);
 list($result,$count) = $query
 	->foundRows()
-	->tables('test')
+	->tables(['test'])
 	->order(['uuid'])
 	->page(1,4)
 	->fetchObjects();
@@ -40,7 +40,7 @@ var_dump($count);
 
 list($result2,$count2) = $query
 	->foundRows()
-	->tables('test')
+	->tables(['test'])
 	->order(['uuid DESC'])
 	->page(1,4)
 	->where('left(test.uuid,1) = "a"')

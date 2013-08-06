@@ -111,4 +111,24 @@ trait Util
 	public function exists($col, $value){
 		return $this->isDuplicate($col,$value);
 	}
+
+	public function fetchIdByKey($col, $value){
+		$result = $this->fetchValueByKey($col, $value);
+		foreach($result as &$row){
+			$row = $row['uuid'];
+		}
+		return $result
+	}
+
+	public function fetchValueByKey($col, $value){
+		list($table, $column) = explode('.',$col);
+		$this->table($table);
+		$this->column($table, $column);
+		$query = new MysqlQuery($this);
+		list($result,$count) = $query
+			->tables([$table])
+			->where('`'.$table.'`.`'.$column.'` = "'.mysql_real_escape_string((string)$value).'"')
+			->fetch();
+		return $result;
+	}
 }
