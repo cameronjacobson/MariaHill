@@ -107,4 +107,8 @@ trait Util
 		$row = $stmt->fetch(PDO::FETCH_ASSOC);
 		return $row['count'] > 0 ? true : false;
 	}
+
+	public function exists($col, $value){
+		return $this->isDuplicate($col,$value);
+	}
 }

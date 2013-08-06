@@ -27,7 +27,7 @@ $start = microtime(true);
 var_dump($db->isDuplicate('test.col1','abc'));
 $uuid = $db->store($test);
 var_dump($uuid);
-var_dump($db->isDuplicate('test.col1','abc'));
+var_dump($db->exists('test.col1','abc'));
 
 
 $test->col1 = 'def';
