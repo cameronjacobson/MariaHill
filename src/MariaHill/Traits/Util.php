@@ -116,7 +116,7 @@ trait Util
 	public function fetchIdByKey($col, $value){
 		$result = $this->fetchValueByKey($col, $value);
 		foreach($result as $k=>$v){
-			$result[$k] = $row['uuid'];
+			$result[$k] = $v['uuid'];
 		}
 		return $result;
 	}
