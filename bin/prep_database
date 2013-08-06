@@ -1,0 +1,33 @@
+#!/usr/bin/php
+<?php
+
+if(empty($argv[1])){
+	die('   USAGE: bin/prep_database {{database}}'.PHP_EOL);
+}
+
+require_once(dirname(__DIR__).'/vendor/autoload.php');
+
+use MariaHill\MariaHill;
+
+$config = parse_ini_file(dirname(__DIR__).'/config/config.ini', true);
+
+$config['mariahill'] = $config['mariahill_admin'];
+$meta_dir = $config['mariahill']['meta_dir'];
+$db = new MariaHill($config);
+
+if(!file_exists($meta_dir.'/db/'.$argv[1].'.json')){
+	die('   ERROR: database does not exist'.PHP_EOL);
+}
+
+$db->changeDatabase($argv[1]);
+
+$db->db->exec('DROP TABLE IF EXISTS relationships');
+$db->db->exec('CREATE TABLE IF NOT EXISTS relationships(uuid1 char(36) NOT NULL DEFAULT "" PRIMARY KEY,
+		uuid2 char(36) NOT NULL DEFAULT "",
+		table1 varchar(50) NOT NULL DEFAULT "",
+		table2 varchar(50) NOT NULL DEFAULT"",
+		UNIQUE KEY key1(uuid1,uuid2,table1,table2)
+)');
+
+
+echo 'DONE'.PHP_EOL;

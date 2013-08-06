@@ -2,8 +2,7 @@
 <?php
 
 if(empty($argv[1]) || empty($argv[2])){
-	echo PHP_EOL.'  USAGE: bin/show_columns [database] [table]'.PHP_EOL.PHP_EOL;
-	exit;
+	die('   USAGE: bin/show_columns [database] [table]'.PHP_EOL);
 }
 
 require_once(dirname(__DIR__).'/vendor/autoload.php');

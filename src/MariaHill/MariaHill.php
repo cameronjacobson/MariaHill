@@ -100,21 +100,21 @@ class MariaHill
 		return $data[':uuid'];
 	}
 
-	private function database($dbname){
+	public function database($dbname){
 		if(!$this->ADMIN_MODE && empty($this->meta[$dbname])){
 			throw new MariaHillException('database '.$dbname.' not found');
 		}
 		return $dbname;
 	}
 
-	private function table($tablename){
+	public function table($tablename){
 		if(!$this->ADMIN_MODE && empty($this->meta[$this->database][$tablename])){
 			throw new MariaHillException('table '.$this->database.'.'.$tablename.' not found');
 		}
 		return $tablename;
 	}
 
-	private function column($tablename, $colname){
+	public function column($tablename, $colname){
 		if(!$this->ADMIN_MODE && empty($this->meta[$this->database][$tablename][$colname])){
 			throw new MariaHillException('column '.$this->database.'.'.$tablename.'.'.$colname.' not found');
 		}
@@ -134,6 +134,10 @@ class MariaHill
 			return $this->cast($data, $this->classmap[$table]);
 		}
 		throw new MariaHillException('Invalid table: '.$table.' not defined in classmap');
+	}
+
+	public function castTableData($data, $tablename){
+		return $this->cast($data, $this->classmap[$tablename]);
 	}
 
 	private function cast($data, $classname){
@@ -187,10 +191,26 @@ class MariaHill
 			: self::$pkgroot;
 	}
 
+	public function linkIds($uuid1,$uuid2,$table1,$table2,$mutual = true){
+		$this->db->beginTransaction();
+		$stmt = $this->db->prepare("INSERT IGNORE INTO relationships SET uuid1=?,uuid2=?,table1=?,table2=?");
+		$stmt->execute(array($uuid1,$uuid2,$table1,$table2));
+		if($mutual){
+			$stmt->execute(array($uuid2,$uuid1,$table2,$table1));
+		}
+		$this->db->commit();
+	}
+
+	public function linkObjects($obj1,$obj2,$mutual = true){
+		$table1 = $this->tablemap[get_class($obj1)];
+		$table2 = $this->tablemap[get_class($obj2)];
+		$this->linkIds($obj1->uuid, $obj2->uuid, $table1, $table2, $mutual);
+	}
+
 	public function loadMeta(){
 		switch($this->config['meta_strategy']){
 			case 'all':
-				$this->meta = json_decode(file_get_contents($this->config->meta_dir.'/all/meta.json'));
+				$this->meta = json_decode(file_get_contents($this->config['meta_dir'].'/all/meta.json'));
 				break;
 			case 'db':
 				$this->meta = array($this->database => json_decode(file_get_contents($this->config['meta_dir'].'/db/'.$this->database.'.json'),true));
