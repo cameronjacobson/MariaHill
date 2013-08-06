@@ -31,13 +31,14 @@ $db->store($test2);
 
 $db->linkObjects($test,$test2);
 
+sleep(20);
 
 $query = new MysqlQuery($db);
 list($result,$count) = $query
 	->foundRows()
 	->columns('test2.*')
 	->tables(['test','test2'])
-	->page(2,2)
+	->page(1,1)
 	->fetchObjects('test2');
 
 var_dump($result);
@@ -48,7 +49,7 @@ list($result2,$count2) = $query
 	->foundRows()
 	->columns('test.*')
 	->tables(['test2','test'])
-	->page(2,1)
+	->page(1,1)
 	->fetch();
 
 var_dump($result2);

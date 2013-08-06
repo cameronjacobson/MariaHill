@@ -156,8 +156,12 @@ class MariaHill
 			throw new MariaHillException(__LINE__.' uuid not found.');
 		}
 		$table = $this->tablemap[get_class($obj)];
+		$this->db->beginTransaction();
 		$stmt = $this->db->prepare("DELETE FROM `".$this->database."`.`".$this->table($table)."` WHERE uuid=?");
 		$stmt->execute(array($obj->uuid));
+		$stmt = $this->db->prepare("DELETE FROM `".$this->database."`.`relationships` WHERE uuid1=? OR uuid2=?");
+		$stmt->execute(array($obj->uuid,$obj->uuid));
+		$this->db->commit();
 		$obj = null;
 	}
 
