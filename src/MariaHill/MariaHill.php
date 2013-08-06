@@ -212,6 +212,9 @@ class MariaHill
 	}
 
 	public function loadMeta(){
+		if($this->ADMIN_MODE){
+			return;
+		}
 		switch($this->config['meta_strategy']){
 			case 'all':
 				$this->meta = json_decode(file_get_contents($this->config['meta_dir'].'/all/meta.json'));
