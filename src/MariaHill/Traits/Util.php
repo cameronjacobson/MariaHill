@@ -97,4 +97,14 @@ trait Util
 		}
 		return implode(',',$sql);
 	}
+
+	public function isDuplicate($col, $value){
+		list($table,$column) = explode('.',$col);
+		$this->table($table);
+		$this->column($table, $column);
+		$stmt = $this->db->prepare('SELECT COUNT(*) as count FROM `'.$this->database.'`.`'.$table.'` WHERE `'.$column.'`=?');
+		$stmt->execute(array($value));
+		$row = $stmt->fetch(PDO::FETCH_ASSOC);
+		return $row['count'] > 0 ? true : false;
+	}
 }
