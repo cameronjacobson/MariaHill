@@ -26,6 +26,8 @@ for($x=0;$x<10;$x++){
 	$tests[$uuid] = $test;
 }
 
+var_dump($db->fetchValueByKey('test.col2',$test->col2));
+var_dump($db->fetchIdByKey('test.col1',substr($test->col1,0,25)));
 
 $query = new MysqlQuery($db);
 list($result,$count) = $query

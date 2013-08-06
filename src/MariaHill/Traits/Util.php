@@ -4,6 +4,7 @@ namespace MariaHill\Traits;
 
 use \PDO;
 use \MariaHill\MariaHill;
+use \MariaHill\Query\MysqlQuery;
 
 trait Util
 {
@@ -114,10 +115,10 @@ trait Util
 
 	public function fetchIdByKey($col, $value){
 		$result = $this->fetchValueByKey($col, $value);
-		foreach($result as &$row){
-			$row = $row['uuid'];
+		foreach($result as $k=>$v){
+			$result[$k] = $row['uuid'];
 		}
-		return $result
+		return $result;
 	}
 
 	public function fetchValueByKey($col, $value){
