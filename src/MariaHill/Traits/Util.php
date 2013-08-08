@@ -100,11 +100,25 @@ trait Util
 	}
 
 	public function isDuplicate($col, $value){
-		list($table,$column) = explode('.',$col);
-		$this->table($table);
-		$this->column($table, $column);
-		$stmt = $this->db->prepare('SELECT COUNT(*) as count FROM `'.$this->database.'`.`'.$table.'` WHERE `'.$column.'`=?');
-		$stmt->execute(array($value));
+		$where = $values = array();
+		if(is_array($col)){
+			foreach($col as $key=>$val){
+				list($table,$column) = explode('.',$val);
+				$this->table($table);
+				$this->column($table, $column);
+				$where[] = '`'.$column.'`=?';
+				$values[] = $value[$key];
+			}
+		}
+		else{
+			list($table,$column) = explode('.',$col);
+			$this->table($table);
+			$this->column($table, $column);
+			$where[] = '`'.$table.'`.`'.$column.'`=?';
+			$values[] = $value;
+		}
+		$stmt = $this->db->prepare('SELECT COUNT(*) as count FROM `'.$this->database.'`.`'.$table.'` WHERE '.implode(' AND ',$where));
+		$stmt->execute($values);
 		$row = $stmt->fetch(PDO::FETCH_ASSOC);
 		return $row['count'] > 0 ? true : false;
 	}
@@ -122,13 +136,25 @@ trait Util
 	}
 
 	public function fetchValueByKey($col, $value){
-		list($table, $column) = explode('.',$col);
-		$this->table($table);
-		$this->column($table, $column);
+		$where = array();
+		if(is_array($col)){
+			foreach($col as $key=>$val){
+				list($table, $column) = explode('.',$val);
+				$this->table($table);
+				$this->column($table, $column);
+				$where[] = '`'.$table.'`.`'.$column.'` = "'.mysql_real_escape_string((string)$value[$key]).'"';
+			}
+		}
+		else{
+			list($table, $column) = explode('.',$col);
+			$this->table($table);
+			$this->column($table, $column);
+			$where[] = '`'.$table.'`.`'.$column.'` = "'.mysql_real_escape_string((string)$value).'"';
+		}
 		$query = new MysqlQuery($this);
 		list($result,$count) = $query
 			->tables([$table])
-			->where('`'.$table.'`.`'.$column.'` = "'.mysql_real_escape_string((string)$value).'"')
+			->where(implode(' AND ', $where))
 			->fetch();
 		return $result;
 	}
